@@ -163,9 +163,35 @@ contract MentorDAO is Ownable {
         return pendingProjects;
     }
 
-    function getMentorProjects(address _mentor) public view returns (uint256[] memory) {
-        return mentorProjects[_mentor];
+    function getProjectsByMentor(address _mentor) public view returns (
+    uint256[] memory, 
+    string[] memory, 
+    string[] memory, 
+    string[] memory, 
+    bool[] memory, 
+    bool[] memory
+) {
+    uint256[] memory projectIds = mentorProjects[_mentor];
+    uint256 projectCount = projectIds.length;
+
+    string[] memory names = new string[](projectCount);
+    string[] memory descriptions = new string[](projectCount);
+    string[] memory skillAreas = new string[](projectCount);
+    bool[] memory isAssignedList = new bool[](projectCount);
+    bool[] memory isCompletedList = new bool[](projectCount);
+
+    for (uint256 i = 0; i < projectCount; i++) {
+        Project memory project = projects[projectIds[i]];
+        names[i] = project.projectName;
+        descriptions[i] = project.projectDescription;
+        skillAreas[i] = project.skillArea;
+        isAssignedList[i] = project.isAssigned;
+        isCompletedList[i] = project.isCompleted;
     }
+
+    return (projectIds, names, descriptions, skillAreas, isAssignedList, isCompletedList);
+}
+
 
     function getStudentProjects(address _student) public view returns (uint256[] memory) {
         return studentProjects[_student];

@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { 
-  Activity, 
+import {
+  Activity,
   Users,
   Calendar,
   Clock,
@@ -20,7 +20,7 @@ import {
   Plus,
   FileText,
   ChevronDown,
-  FolderOpen
+  FolderOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -54,10 +54,20 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { createProjectOnChain, saveProjectToDB } from "@/lib/projectUtils";
 import { getMentorProjects } from "@/lib/mentorUtils";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 const projectSchema = z.object({
   projectName: z.string().min(3, "Project name must be at least 3 characters"),
-  projectDescription: z.string().min(10, "Description must be at least 10 characters"),
+  projectDescription: z
+    .string()
+    .min(10, "Description must be at least 10 characters"),
   skillArea: z.string().min(2, "Skill area must be specified"),
 });
 
@@ -76,6 +86,8 @@ export default function ProjectPage() {
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [walletAddress, setWalletAddress] = useState("");
 
   const { address, isConnected } = useAccount();
   const [formLoading, setFormLoading] = useState(false);
@@ -85,7 +97,7 @@ export default function ProjectPage() {
     defaultValues: {
       projectName: "",
       projectDescription: "",
-      skillArea: ""
+      skillArea: "",
     },
   });
 
@@ -104,17 +116,18 @@ export default function ProjectPage() {
       if (!fetchedProjects || fetchedProjects.length === 0) {
         console.log("No projects found");
         setProjects([]);
-        setIsLoading(false);
         return;
       }
 
+      // Validating and formatting the projects
       const validatedProjects = fetchedProjects.map((project: any) => ({
         id: project.id?.toString() || Date.now().toString(),
         projectName: project.projectName || "Unnamed Project",
-        projectDescription: project.projectDescription || "No description available",
+        projectDescription:
+          project.projectDescription || "No description available",
         skillArea: project.skillArea || "General",
-        studentCount: Number(project.studentCount) || 0,
-        status: project.status === "active" ? "active" : "draft",
+        isAssigned: project.isAssigned ?? false, // Ensuring boolean values
+        isCompleted: project.isCompleted ?? false, // Ensuring boolean values
       }));
 
       console.log("Validated Projects:", validatedProjects);
@@ -144,13 +157,15 @@ export default function ProjectPage() {
       }
     };
 
-    window.ethereum?.on('accountsChanged', handleAccountsChanged);
+    window.ethereum?.on("accountsChanged", handleAccountsChanged);
     return () => {
-      window.ethereum?.removeListener('accountsChanged', handleAccountsChanged);
+      window.ethereum?.removeListener("accountsChanged", handleAccountsChanged);
     };
   }, [address, isConnected]);
 
-  const onSubmit: SubmitHandler<z.infer<typeof projectSchema>> = async (values) => {
+  const onSubmit: SubmitHandler<z.infer<typeof projectSchema>> = async (
+    values
+  ) => {
     if (!address) {
       toast.error("Wallet not connected");
       return;
@@ -185,10 +200,18 @@ export default function ProjectPage() {
       form.reset();
     } catch (error) {
       console.error("Project creation error:", error);
-      toast.error(error instanceof Error ? error.message : "Project creation failed");
+      toast.error(
+        error instanceof Error ? error.message : "Project creation failed"
+      );
     } finally {
       setFormLoading(false);
     }
+  };
+
+  const handleAssign = () => {
+    console.log("Assigning to:", walletAddress);
+    setIsDialogOpen(false);
+    // TODO: Integrate smart contract call here
   };
 
   const routes = [
@@ -216,10 +239,12 @@ export default function ProjectPage() {
 
   return (
     <div className="flex min-h-screen">
-      <aside className={cn(
-        "fixed left-0 top-0 z-40 h-screen w-64 border-r bg-background transition-transform lg:relative lg:translate-x-0",
-        !isSidebarOpen && "-translate-x-full"
-      )}>
+      <aside
+        className={cn(
+          "fixed left-0 top-0 z-40 h-screen w-64 border-r bg-background transition-transform lg:relative lg:translate-x-0",
+          !isSidebarOpen && "-translate-x-full"
+        )}
+      >
         <div className="px-6 py-4">
           <Link href="/dashboard" className="flex items-center space-x-2">
             <LineChart className="h-6 w-6" />
@@ -291,8 +316,10 @@ export default function ProjectPage() {
 
         <main className="flex-1 space-y-4 p-4 md:p-8 pt-6">
           <div className="flex items-center justify-between space-y-2">
-            <h2 className="text-3xl font-bold tracking-tight">Manage Projects</h2>
-            <Button 
+            <h2 className="text-3xl font-bold tracking-tight">
+              Manage Projects
+            </h2>
+            <Button
               className="bg-emerald-500 hover:bg-emerald-600 text-white"
               onClick={() => form.setFocus("projectName")}
             >
@@ -305,7 +332,10 @@ export default function ProjectPage() {
             <Card className="lg:col-span-2 p-6">
               <h3 className="text-xl font-semibold mb-6">Create New Project</h3>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-4"
+                >
                   <FormField
                     control={form.control}
                     name="projectName"
@@ -319,7 +349,7 @@ export default function ProjectPage() {
                       </FormItem>
                     )}
                   />
-        
+
                   <FormField
                     control={form.control}
                     name="projectDescription"
@@ -337,7 +367,7 @@ export default function ProjectPage() {
                       </FormItem>
                     )}
                   />
-        
+
                   <FormField
                     control={form.control}
                     name="skillArea"
@@ -345,32 +375,53 @@ export default function ProjectPage() {
                       <FormItem>
                         <FormLabel>Skill Area</FormLabel>
                         <FormControl>
-                          <Input placeholder="Blockchain, AI, etc." {...field} />
+                          <Input
+                            placeholder="Blockchain, AI, etc."
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-        
-                  <Button 
-                    type="submit" 
-                    disabled={formLoading} 
+
+                  <Button
+                    type="submit"
+                    disabled={formLoading}
                     className="w-full"
                   >
                     {formLoading ? (
                       <>
-                        <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        <svg
+                          className="animate-spin -ml-1 mr-3 h-4 w-4 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
                         </svg>
                         Creating...
                       </>
-                    ) : "Create Project"}
+                    ) : (
+                      "Create Project"
+                    )}
                   </Button>
                 </form>
               </Form>
             </Card>
-            
+
             <Card className="p-6">
               <h3 className="text-xl font-semibold mb-6">Your Projects</h3>
               <div className="space-y-4">
@@ -393,11 +444,13 @@ export default function ProjectPage() {
                 ) : projects.length === 0 ? (
                   <div className="text-center py-8">
                     <FolderOpen className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900">No projects yet</h3>
+                    <h3 className="text-lg font-medium text-gray-900">
+                      No projects yet
+                    </h3>
                     <p className="mt-1 text-sm text-muted-foreground">
                       Get started by creating your first project
                     </p>
-                    <Button 
+                    <Button
                       className="mt-4"
                       onClick={() => form.setFocus("projectName")}
                     >
@@ -408,49 +461,96 @@ export default function ProjectPage() {
                 ) : (
                   <ScrollArea className="h-[calc(100vh-300px)] pr-4">
                     {projects.map((project) => (
-                      <div key={project.id} className="border rounded-lg p-4 hover:bg-accent transition-colors mb-4">
+                      <div
+                        key={project.id}
+                        className="border rounded-lg p-4 hover:bg-accent transition-colors mb-4"
+                      >
                         <div className="flex justify-between items-start">
                           <div>
-                            <h4 className="font-medium">{project.projectName}</h4>
+                            <h4 className="font-medium">
+                              {project.projectName}
+                            </h4>
                             <p className="text-sm text-muted-foreground mt-1">
                               {project.projectDescription}
                             </p>
                             <div className="flex items-center mt-2 space-x-2 text-sm text-muted-foreground">
-                              <span className="capitalize">{project.skillArea}</span>
+                              <span className="capitalize">
+                                {project.skillArea}
+                              </span>
                               <span>•</span>
-                              <span>{project.studentCount} student{project.studentCount !== 1 ? 's' : ''}</span>
+                              <span>
+                                {project.studentCount} student
+                                {project.studentCount !== 1 ? "s" : ""}
+                              </span>
                             </div>
                           </div>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                              >
                                 <ChevronDown className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem>Edit</DropdownMenuItem>
-                              <DropdownMenuItem>View Submissions</DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => setIsDialogOpen(true)}
+                              >
+                                Assign
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                View Submissions
+                              </DropdownMenuItem>
                               <DropdownMenuItem className="text-red-500">
                                 Delete
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
+                          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Assign Project</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              type="text"
+              placeholder="Enter wallet address"
+              value={walletAddress}
+              onChange={(e) => setWalletAddress(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAssign} disabled={!walletAddress.trim()}>
+              Assign
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
                         </div>
                         <div className="mt-3 flex items-center justify-between">
-                          <span className={cn(
-                            "px-2 py-1 text-xs rounded-full",
-                            project.status === "active" 
-                              ? "bg-emerald-100 text-emerald-800" 
-                              : "bg-gray-100 text-gray-800"
-                          )}>
+                          <span
+                            className={cn(
+                              "px-2 py-1 text-xs rounded-full",
+                              project.status === "active"
+                                ? "bg-emerald-100 text-emerald-800"
+                                : "bg-gray-100 text-gray-800"
+                            )}
+                          >
                             {project.status === "active" ? "Active" : "Draft"}
                           </span>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             className="text-emerald-500"
                             onClick={() => {
-                              router.push(`/dashboard-mentor/project/${project.id}`);
+                              router.push(
+                                `/dashboard-mentor/project/${project.id}`
+                              );
                             }}
                           >
                             <FileText className="mr-2 h-4 w-4" />

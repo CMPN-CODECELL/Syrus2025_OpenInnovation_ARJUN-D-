@@ -114,32 +114,29 @@ export async function getMentorProjects(mentorAddress: string) {
     const provider = new ethers.BrowserProvider(window.ethereum);
     const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
 
-    console.log("Mentor Address:", mentorAddress);
-    console.log("Contract Address:", CONTRACT_ADDRESS);
+    console.log("Fetching projects for Mentor:", mentorAddress);
 
     // Call the contract function
-    const projects = await contract.getMentorProjects(mentorAddress);
+    const projects = await contract.getProjectsByMentor(mentorAddress);
     console.log("Raw contract response:", projects);
 
     // Handle case where no projects found
-    if (!projects || projects.length === 0) {
+    if (!projects || projects[0].length === 0) {
       console.log("No projects found for address:", mentorAddress);
       return [];
     }
 
-    // Parse the project data
-    return projects.map((p: any) => {
-      return {
-        id: p.id?.toString() || "0",
-        projectName: p.name || "Unnamed Project", // Updated field
-        projectDescription: p.description || "No description", // Updated field
-        skillArea: p.skill || "General", // Updated field
-        studentCount: p.studentCount ? Number(p.studentCount) : 0,
-        status: p.active ? "active" : "draft",
-      };
-    });
+    // Extract and map the project data correctly
+    return projects[0].map((id: any, index: number) => ({
+      id: id.toString(),
+      projectName: projects[1][index] || "Unnamed Project",
+      projectDescription: projects[2][index] || "No description available",
+      skillArea: projects[3][index] || "General",
+      isAssigned: projects[4][index], // Boolean
+      isCompleted: projects[5][index], // Boolean
+    }));
   } catch (error) {
-    console.error("Error in getMentorProjects:", error);
+    console.error("Error fetching mentor projects:", error);
     return [];
   }
 }
