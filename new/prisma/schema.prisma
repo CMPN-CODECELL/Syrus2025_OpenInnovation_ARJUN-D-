@@ -1,0 +1,42 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Mentor {
+  id         Int     @id @default(autoincrement())
+  name       String
+  expertise  String
+  email      String  @unique
+  wallet     String  @unique
+  tx_hash    String
+  isApproved Boolean @default(false)
+  createdAt  DateTime @default(now())
+  projects   Project[]
+}
+
+model Project {
+  id                 Int      @id @default(autoincrement())
+  projectName        String
+  projectDescription String
+  skillArea          String
+  mentorWallet       String
+  studentWallet      String?
+  tx_hash            String
+  isAssigned         Boolean  @default(false)
+  isCompleted        Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  mentor             Mentor   @relation(fields: [mentorWallet], references: [wallet], onDelete: Cascade)
+}
