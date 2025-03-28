@@ -1,0 +1,20 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Mentor {
+  id         Int  @id @default(autoincrement())
+  name       String
+  expertise  String
+  email      String  @unique
+  wallet     String  @unique
+  tx_hash    String
+  isApproved Boolean @default(false)
+  createdAt  DateTime @default(now())
+}
