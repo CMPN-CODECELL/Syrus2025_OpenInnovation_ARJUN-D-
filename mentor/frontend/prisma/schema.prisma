@@ -18,3 +18,14 @@ model Mentor {
   isApproved Boolean @default(false)
   createdAt  DateTime @default(now())
 }
+
+model Project {
+  id                 Int  @id @default(autoincrement()) // Unique identifier
+  project_name       String
+  project_description String
+  skill_area        String
+  mentor_wallet     String  @unique
+  tx_hash           String  @unique
+  createdAt         DateTime @default(now()) // Timestamp for record creation
+}
+

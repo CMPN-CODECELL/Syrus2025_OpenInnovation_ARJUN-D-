@@ -212,19 +212,19 @@ export default function DashboardPage() {
               <div className="space-y-4">
                 {[
                   {
-                    student: "Emma Thompson",
+                    student: "Rohit Shahi",
                     topic: "React Advanced Patterns",
                     time: "2:00 PM - 3:00 PM",
                     image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
                   },
                   {
-                    student: "Michael Chen",
+                    student: "Devansh Joshi",
                     topic: "System Design Basics",
                     time: "4:00 PM - 5:00 PM",
                     image: "https://images.unsplash.com/photo-1519345182560-3f2917c472ef?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
                   },
                   {
-                    student: "Sarah Wilson",
+                    student: "Umesh Tolani",
                     topic: "JavaScript Fundamentals",
                     time: "6:00 PM - 7:00 PM",
                     image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
@@ -254,19 +254,19 @@ export default function DashboardPage() {
               <div className="space-y-4">
                 {[
                   {
-                    name: "Emma Thompson",
+                    name: "Rohit Shahi",
                     course: "Advanced React",
                     progress: 85,
                     image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
                   },
                   {
-                    name: "Michael Chen",
+                    name: "Devansh Joshi",
                     course: "System Design",
                     progress: 60,
                     image: "https://images.unsplash.com/photo-1519345182560-3f2917c472ef?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
                   },
                   {
-                    name: "Sarah Wilson",
+                    name: "Umesh Tolani",
                     course: "JavaScript Basics",
                     progress: 40,
                     image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
