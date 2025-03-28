@@ -60,7 +60,7 @@ export default function DashboardPage() {
     {
       label: "Profile",
       icon: User,
-      href: "/dashboard/profile",
+      href: "/dashboard-mentor/profile",
     },
   ];
 

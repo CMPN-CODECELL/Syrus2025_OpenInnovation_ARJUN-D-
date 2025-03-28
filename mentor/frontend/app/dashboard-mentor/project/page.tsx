@@ -233,7 +233,7 @@ export default function ProjectPage() {
     {
       label: "Profile",
       icon: User,
-      href: "/dashboard/profile",
+      href: "/dashboard-mentor/profile",
     },
   ];
 
