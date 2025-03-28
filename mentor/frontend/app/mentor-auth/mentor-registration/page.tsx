@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAccount } from "wagmi"
+import { useAccount } from "wagmi";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useForm, SubmitHandler } from "react-hook-form";
@@ -26,8 +26,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { registerMentorOnChain, saveMentorToDB } from "@/lib/mentorUtils";
-import { supabase } from "@/lib/supabaseClient";
-import { log } from "console";
+import { ethers } from "ethers";
+import mentor from "../../mentor.json"; // Import contract ABI and address
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -46,27 +46,40 @@ function MentorRegistrationPage() {
     if (!isConnected) {
       toast.error("You must connect your wallet to register as a mentor.");
       router.push("/mentor-auth"); // Redirect if wallet is not connected
+      return;
     }
 
-    const checkMentorRegistration = async () => {
-        const { data, error } = await supabase
-          .from("Mentor")
-          .select("wallet")
-          .eq("wallet", address)
-          .single();
-  
-        if (error) {
-          console.error("Supabase Query Error:", error.message);
+    const checkMentorApproval = async () => {
+      try {
+        if (!window.ethereum) {
+          toast.error("MetaMask not detected!");
           return;
         }
-  
-        if (data) {
-          router.push("/dashboard-mentor"); // Redirect to dashboard if registered
+
+        // Initialize provider and contract
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const contract = new ethers.Contract(
+          mentor.address,
+          mentor.abi,
+          provider
+        );
+
+        // Call the isMentorApproved function
+        const isApproved = await contract.isMentorApproved(address);
+        console.log("Mentor approval status:", isApproved);
+
+        if (isApproved) {
+          toast.success("You are already approved!");
+          router.push("/dashboard-mentor"); // Redirect if approved
         }
-      };
-  
-      checkMentorRegistration();
-  }, [isConnected, router , address]);
+      } catch (error) {
+        console.error("Error checking mentor approval:", error);
+        toast.error("Failed to verify approval status.");
+      }
+    };
+
+    checkMentorApproval();
+  }, [isConnected, router, address]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -86,7 +99,11 @@ function MentorRegistrationPage() {
 
     try {
       // Register mentor on-chain
-      const txHash = await registerMentorOnChain(data.name, data.expertise, data.email);
+      const txHash = await registerMentorOnChain(
+        data.name,
+        data.expertise,
+        data.email
+      );
 
       if (!txHash) {
         toast.error("On-chain registration failed!");
@@ -94,11 +111,17 @@ function MentorRegistrationPage() {
       }
 
       // Save mentor in Supabase
-      const success = await saveMentorToDB(data.name, data.expertise, data.email, address, txHash);
+      const success = await saveMentorToDB(
+        data.name,
+        data.expertise,
+        data.email,
+        address,
+        txHash
+      );
 
       if (success) {
         toast.success("Mentor registered successfully!");
-        router.push("/mentor-dashboard");
+        router.push("/dashboard-mentor");
       } else {
         toast.error("Failed to save mentor in database.");
       }
@@ -108,14 +131,14 @@ function MentorRegistrationPage() {
     }
   };
 
-
-
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-10">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Mentor Registration</CardTitle>
-          <CardDescription>Register as a mentor to help students</CardDescription>
+          <CardDescription>
+            Register as a mentor to help students
+          </CardDescription>
           <CardDescription>Your Address: {address}</CardDescription>
         </CardHeader>
         <CardContent>
@@ -172,9 +195,7 @@ function MentorRegistrationPage() {
             </form>
           </Form>
         </CardContent>
-        <CardFooter>
-          
-        </CardFooter>
+        <CardFooter></CardFooter>
       </Card>
     </main>
   );
