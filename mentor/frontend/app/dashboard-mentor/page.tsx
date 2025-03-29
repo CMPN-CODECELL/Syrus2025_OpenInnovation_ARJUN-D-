@@ -14,6 +14,7 @@ import {
   Settings,
   CreditCard,
   User,
+  Award,
   Search,
   Workflow,
   LineChart
@@ -61,6 +62,11 @@ export default function DashboardPage() {
       label: "Profile",
       icon: User,
       href: "/dashboard-mentor/profile",
+    },
+    {
+      label: "Issue Certification",
+      icon: Award,
+      href: "/dashboard-mentor/certificate-issue",
     },
   ];
 

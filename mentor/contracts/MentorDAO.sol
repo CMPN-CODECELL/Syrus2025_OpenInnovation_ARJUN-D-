@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract MentorDAO is Ownable {
+contract MentorDAO is Ownable, ERC721URIStorage {
     // Mentor Structure
     struct Mentor {
         address mentorAddress;
@@ -49,7 +50,7 @@ contract MentorDAO is Ownable {
 
     // Arrays for pending items
     address[] public pendingMentors;
-    address[] public approvedMentors; // New array to track approved mentors
+    address[] public approvedMentors;
 
     uint256[] public pendingProjects;
 
@@ -57,6 +58,7 @@ contract MentorDAO is Ownable {
     uint256 public mentorCounter;
     uint256 public studentCounter;
     uint256 public projectCounter;
+    uint256 public certificateCounter;
 
     // Events
     event MentorRegistered(address indexed mentorAddress, string name, string expertise);
@@ -67,11 +69,14 @@ contract MentorDAO is Ownable {
     event ProjectCreated(uint256 indexed projectId, address indexed mentor, string projectName);
     event ProjectAssigned(uint256 indexed projectId, address indexed student);
     event ProjectCompleted(uint256 indexed projectId);
+    event CertificateIssued(uint256 indexed certificateId, address indexed mentor, address indexed student, string uri);
 
-    constructor() Ownable(msg.sender) {
+    // Constructor
+    constructor() ERC721("MentorCertificate", "MCERT") Ownable(msg.sender) {
         mentorCounter = 0;
         studentCounter = 0;
         projectCounter = 0;
+        certificateCounter = 0;
     }
 
     // Mentor Registration
@@ -97,7 +102,7 @@ contract MentorDAO is Ownable {
     function approveMentor(address _mentorAddress) public onlyOwner {
         require(!mentors[_mentorAddress].isApproved, "Mentor already approved");
         mentors[_mentorAddress].isApproved = true;
-        
+
         // Remove from pending mentors
         for (uint i = 0; i < pendingMentors.length; i++) {
             if (pendingMentors[i] == _mentorAddress) {
@@ -106,7 +111,7 @@ contract MentorDAO is Ownable {
                 break;
             }
         }
-        
+
         emit MentorApproved(_mentorAddress);
     }
 
@@ -134,7 +139,7 @@ contract MentorDAO is Ownable {
         require(mentors[_mentor].isApproved, "Mentor not approved");
         mentorshipRequests[_mentor].push(msg.sender);
         emit MentorshipRequested(msg.sender, _mentor);
-    }
+    } 
 
     // Mentor Accepts Student Request
     function acceptMentorship(address _student) public {
@@ -309,5 +314,23 @@ contract MentorDAO is Ownable {
             totalProjects,
             studentCounts
         );
+    }
+
+    // Issue Certificate to Student
+    function issueCertificate(address _student, string memory _tokenURI) public {
+        // Verify that the caller is an approved mentor
+        require(mentors[msg.sender].isApproved, "Only approved mentors can issue certificates");
+
+        // Increment the certificate counter
+        certificateCounter++;
+
+        // Mint the certificate as an NFT
+        _mint(_student, certificateCounter);
+
+        // Set the token URI (metadata for the certificate)
+        _setTokenURI(certificateCounter, _tokenURI);
+
+        // Emit the event
+        emit CertificateIssued(certificateCounter, msg.sender, _student, _tokenURI);
     }
 }

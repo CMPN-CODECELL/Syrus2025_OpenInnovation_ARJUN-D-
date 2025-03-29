@@ -36,7 +36,7 @@ export default function DashboardPage() {
     totalProjects: string;
     studentCount: string;
   }
-  
+
   const [approvedMentors, setApprovedMentors] = useState<Mentor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { isConnected } = useAccount();

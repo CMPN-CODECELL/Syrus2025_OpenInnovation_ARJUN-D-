@@ -195,8 +195,19 @@ export default function ProjectPage() {
         throw new Error("Failed to save project to database");
       }
 
+      // Add the new project directly to the projects state
+      const newProject = {
+        id: Date.now().toString(), // Generate a unique ID for the new project
+        projectName: values.projectName,
+        projectDescription: values.projectDescription,
+        skillArea: values.skillArea,
+        studentCount: 0, // Default value for a new project
+        status: "draft", // Default status for a new project
+      };
+
+      setProjects((prevProjects) => [newProject, ...prevProjects]); // Add the new project to the top of the list
+
       toast.success("Project created successfully!");
-      await fetchProjects();
       form.reset();
     } catch (error) {
       console.error("Project creation error:", error);
